@@ -171,8 +171,8 @@ class MyVisualizer:
                 log_file.write('================ Training Loss (%s) ================\n' % now)
 
 
-    def display_current_results(self, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
-            add_image=True):
+    def display_current_results(self, save_path, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
+            add_image=True, ):
         """Display current results on tensorboad; save current results to an HTML file.
 
         Parameters:
@@ -182,7 +182,7 @@ class MyVisualizer:
             dataset (str) - - 'train' or 'val' or 'test'
         """
         # if (not add_image) and (not save_results): return
-        
+
         for label, image in visuals.items():
             for i in range(image.shape[0]):
                 image_numpy = util.tensor2im(image[i])
@@ -191,9 +191,9 @@ class MyVisualizer:
                             image_numpy, total_iters, dataformats='HWC')
 
                 if save_results:
-                    save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
-                    if not os.path.isdir(save_path):
-                        os.makedirs(save_path)
+                    # save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
+                    # if not os.path.isdir(save_path):
+                    #     os.makedirs(save_path)
 
                     if name is not None:
                         img_path = os.path.join(save_path, '%s.png' % name)

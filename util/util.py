@@ -206,3 +206,14 @@ def draw_landmarks(img, landmark, color='r', step=2):
                 for m in range(landmark.shape[0]):
                     img[m, v[m], u[m]] = c
     return img
+
+
+def save_landmark(path, lex, ley, rex, rey, nx, ny, mlx, mly, mrx, mry):
+    with open(path,'w') as file:
+        file.write('%s\t%s\n'%(lex, ley))
+        file.write('%s\t%s\n'%(rex, rey))
+        file.write('%s\t%s\n'%(nx, ny))
+        file.write('%s\t%s\n'%(mlx, mly))
+        file.write('%s\t%s\n'%(mrx, mry))
+
+    file.close()
