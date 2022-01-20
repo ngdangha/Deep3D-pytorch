@@ -237,6 +237,7 @@ class ParametricFaceModel:
             trans            -- torch.tensor, size (B, 3)
         """
         return face_shape @ rot + trans.unsqueeze(1)
+        # return face_shape + trans.unsqueeze(1)
 
 
     def get_landmarks(self, face_proj):
