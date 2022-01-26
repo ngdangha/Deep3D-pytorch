@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 from scipy.io import loadmat
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from util.preprocess import align_for_lm
 from shutil import move
 
