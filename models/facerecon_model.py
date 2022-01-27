@@ -11,6 +11,7 @@ from util import util
 from util.nvdiffrast import MeshRenderer
 from util.preprocess import estimate_norm_torch
 
+from PIL import Image
 import trimesh
 from scipy.io import savemat
 
@@ -62,7 +63,7 @@ class FaceReconModel(BaseModel):
 
         opt, _ = parser.parse_known_args()
         parser.set_defaults(
-                focal=1015., center=112., camera_d=10., use_last_fc=False, z_near=5., z_far=15.
+                focal=1015., center=512., camera_d=10., use_last_fc=False, z_near=2., z_far=50.
             )
         if is_train:
             parser.set_defaults(
@@ -95,7 +96,8 @@ class FaceReconModel(BaseModel):
             is_train=self.isTrain, default_name=opt.bfm_model
         )
         
-        fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
+        # fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
+        fov = 2 * np.arctan(112 / 1015) * 180 / np.pi
         self.renderer = MeshRenderer(
             rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center)
         )
@@ -184,9 +186,14 @@ class FaceReconModel(BaseModel):
 
     def compute_visuals(self):
         with torch.no_grad():
+            output_size = 1024
             input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
-            output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * self.input_img
-            # output_vis = self.pred_face
+            input_img_PIL = Image.fromarray(input_img_numpy.squeeze(0).astype('uint8'), 'RGB')
+            input_img_PIL = input_img_PIL.resize((output_size, output_size), resample=Image.BICUBIC)
+            tensor_input_img = torch.tensor(np.array(input_img_PIL)/255., dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
+
+            output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * tensor_input_img
+            # output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask)
             output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
             
             # if self.gt_lm is not None:
