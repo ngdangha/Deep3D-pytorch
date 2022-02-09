@@ -170,8 +170,39 @@ class MyVisualizer:
                 now = time.strftime("%c")
                 log_file.write('================ Training Loss (%s) ================\n' % now)
 
+    #for testing
+    # def display_current_results(self, save_path, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
+    #         add_image=True, ):
+    #     """Display current results on tensorboad; save current results to an HTML file.
 
-    def display_current_results(self, save_path, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
+    #     Parameters:
+    #         visuals (OrderedDict) - - dictionary of images to display or save
+    #         total_iters (int) -- total iterations
+    #         epoch (int) - - the current epoch
+    #         dataset (str) - - 'train' or 'val' or 'test'
+    #     """
+    #     # if (not add_image) and (not save_results): return
+
+    #     for label, image in visuals.items():
+    #         for i in range(image.shape[0]):
+    #             image_numpy = util.tensor2im(image[i])
+    #             if add_image:
+    #                 self.writer.add_image(label + '%s_%02d'%(dataset, i + count),
+    #                         image_numpy, total_iters, dataformats='HWC')
+
+    #             if save_results:
+    #                 # save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
+    #                 # if not os.path.isdir(save_path):
+    #                 #     os.makedirs(save_path)
+
+    #                 if name is not None:
+    #                     img_path = os.path.join(save_path, '%s.png' % name)
+    #                 else:
+    #                     img_path = os.path.join(save_path, '%s_%03d.png' % (label, i + count))
+    #                 util.save_image(image_numpy, img_path)
+
+    #for training
+    def display_current_results(self, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
             add_image=True, ):
         """Display current results on tensorboad; save current results to an HTML file.
 
@@ -191,9 +222,9 @@ class MyVisualizer:
                             image_numpy, total_iters, dataformats='HWC')
 
                 if save_results:
-                    # save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
-                    # if not os.path.isdir(save_path):
-                    #     os.makedirs(save_path)
+                    save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
+                    if not os.path.isdir(save_path):
+                        os.makedirs(save_path)
 
                     if name is not None:
                         img_path = os.path.join(save_path, '%s.png' % name)

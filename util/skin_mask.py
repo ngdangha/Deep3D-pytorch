@@ -111,7 +111,7 @@ def skinmask(imbgr):
 def get_skin_mask(img_path):
     print('generating skin masks......')
     names = [i for i in sorted(os.listdir(
-        img_path)) if 'jpg' in i or 'png' in i or 'jpeg' in i or 'PNG' in i]
+        img_path)) if 'jpg' in i or 'png' in i or 'jpeg' in i or 'PNG' in i or 'JPG' in i]
     save_path = os.path.join(img_path, 'mask')
     if not os.path.isdir(save_path):
         os.makedirs(save_path)

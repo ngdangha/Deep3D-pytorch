@@ -53,7 +53,7 @@ def load_lm_graph(graph_filename):
 def detect_68p(img_path,sess,input_op,output_op):
     print('detecting landmarks......')
     names = [i for i in sorted(os.listdir(
-        img_path)) if 'jpg' in i or 'png' in i or 'jpeg' in i or 'PNG' in i]
+        img_path)) if 'jpg' in i or 'png' in i or 'jpeg' in i or 'PNG' in i or 'JPG' in i]
     vis_path = os.path.join(img_path, 'vis')
     remove_path = os.path.join(img_path, 'remove')
     save_path = os.path.join(img_path, 'landmarks')

@@ -31,7 +31,7 @@ def data_prepare(folder_list,mode):
     for img_folder in folder_list:
         path = os.path.join(img_folder, 'mask')
         msks_list += ['/'.join([img_folder, 'mask', i]) for i in sorted(os.listdir(path)) if 'jpg' in i or 
-                                                    'png' in i or 'jpeg' in i or 'PNG' in i]
+                                                    'png' in i or 'jpeg' in i or 'PNG' in i or 'JPG' in i]
 
     imgs_list = [i.replace('mask/', '') for i in msks_list]
     lms_list = [i.replace('mask', 'landmarks') for i in msks_list]
