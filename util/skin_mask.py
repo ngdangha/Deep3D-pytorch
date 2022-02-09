@@ -5,6 +5,18 @@ import math
 import numpy as np
 import os
 import cv2
+from pathlib import Path
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 class GMM:
     def __init__(self, dim, num, w, mu, cov, cov_det, cov_inv):
@@ -118,8 +130,14 @@ def get_skin_mask(img_path):
     
     for i in range(0, len(names)):
         name = names[i]
-        print('%05d' % (i), ' ', name)
-        full_image_name = os.path.join(img_path, name)
-        img = cv2.imread(full_image_name).astype(np.float32)
-        skin_img = skinmask(img)
-        cv2.imwrite(os.path.join(save_path, name), skin_img.astype(np.uint8))
+        available_skin_mask = Path(os.path.join(save_path, name)) 
+        if not available_skin_mask.is_file():
+            full_image_name = os.path.join(img_path, name)
+            img = cv2.imread(full_image_name).astype(np.float32)
+            skin_img = skinmask(img)
+            cv2.imwrite(os.path.join(save_path, name), skin_img.astype(np.uint8))
+
+            print(bcolors.OKGREEN, '%05d' % (i), ' ', name)
+
+        else:
+            print(bcolors.WARNING, '%05d' % (i), 'Skin mask for:', ' ', name, ' already exist. Skipping...')

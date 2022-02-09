@@ -1,2 +1,10 @@
 datasets/
 venv/
+.idea/
+venv_linux/
+.vs/
+checkpoints/
+data/
+models/
+options/
+util/__pycache__/
