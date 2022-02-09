@@ -1,3 +1,15 @@
+"""This script defines the visualizer for Deep3DFaceRecon_pytorch
+"""
+
+import numpy as np
+import os
+import sys
+import ntpath
+import time
+from . import util, html
+from subprocess import Popen, PIPE
+from torch.utils.tensorboard import SummaryWriter
+
 def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
     """Save images to the disk.
     Parameters:
@@ -11,8 +23,10 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
     image_dir = webpage.get_image_dir()
     short_path = ntpath.basename(image_path[0])
     name = os.path.splitext(short_path)[0]
+
     webpage.add_header(name)
     ims, txts, links = [], [], []
+
     for label, im_data in visuals.items():
         im = util.tensor2im(im_data)
         image_name = '%s/%s.png' % (label, name)
@@ -23,6 +37,7 @@ def save_images(webpage, visuals, image_path, aspect_ratio=1.0, width=256):
         txts.append(label)
         links.append(image_name)
     webpage.add_images(ims, txts, links, width=width)
+
 
 class Visualizer():
     """This class includes several functions that can display/save images and print/save logging information.
@@ -54,9 +69,11 @@ class Visualizer():
         with open(self.log_name, "a") as log_file:
             now = time.strftime("%c")
             log_file.write('================ Training Loss (%s) ================\n' % now)
+
     def reset(self):
         """Reset the self.saved status"""
         self.saved = False
+
 
     def display_current_results(self, visuals, total_iters, epoch, save_result):
         """Display current results on tensorboad; save current results to an HTML file.
@@ -68,6 +85,7 @@ class Visualizer():
         """
         for label, image in visuals.items():
             self.writer.add_image(label, util.tensor2im(image), total_iters, dataformats='HWC')
+
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True
             # save images to the disk
@@ -75,11 +93,13 @@ class Visualizer():
                 image_numpy = util.tensor2im(image)
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)
+
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=0)
             for n in range(epoch, 0, -1):
                 webpage.add_header('epoch [%d]' % n)
                 ims, txts, links = [], [], []
+
                 for label, image_numpy in visuals.items():
                     image_numpy = util.tensor2im(image)
                     img_path = 'epoch%.3d_%s.png' % (n, label)
@@ -88,6 +108,7 @@ class Visualizer():
                     links.append(img_path)
                 webpage.add_images(ims, txts, links, width=self.win_size)
             webpage.save()
+
     def plot_current_losses(self, total_iters, losses):
         # G_loss_collection = {}
         # D_loss_collection = {}
@@ -100,6 +121,7 @@ class Visualizer():
         # self.writer.add_scalars('D_collec', D_loss_collection, total_iters)
         for name, value in losses.items():
             self.writer.add_scalar(name, value, total_iters)
+
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
         """print current losses on console; also save the losses to the disk
@@ -113,9 +135,12 @@ class Visualizer():
         message = '(epoch: %d, iters: %d, time: %.3f, data: %.3f) ' % (epoch, iters, t_comp, t_data)
         for k, v in losses.items():
             message += '%s: %.3f ' % (k, v)
+
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
+
+
 class MyVisualizer:
     def __init__(self, opt):
         """Initialize the Visualizer class
@@ -198,9 +223,12 @@ class MyVisualizer:
                     else:
                         img_path = os.path.join(save_path, '%s_%03d.png' % (label, i + count))
                     util.save_image(image_numpy, img_path)
+
+
     def plot_current_losses(self, total_iters, losses, dataset='train'):
         for name, value in losses.items():
             self.writer.add_scalar(name + '/%s'%dataset, value, total_iters)
+
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data, dataset='train'):
         """print current losses on console; also save the losses to the disk
