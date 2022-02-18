@@ -182,56 +182,44 @@ class FaceReconModel(BaseModel):
             self.optimizer.step()        
 
     #for training
-    def compute_visuals(self):
-        with torch.no_grad():
-            input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
-            output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * self.input_img
-            output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
-            
-            if self.gt_lm is not None:
-                gt_lm_numpy = self.gt_lm.cpu().numpy()
-                pred_lm_numpy = self.pred_lm.detach().cpu().numpy()
-                output_vis_numpy = util.draw_landmarks(output_vis_numpy_raw, gt_lm_numpy, 'b')
-                output_vis_numpy = util.draw_landmarks(output_vis_numpy, pred_lm_numpy, 'r')
-            
-                output_vis_numpy = np.concatenate((input_img_numpy, 
-                                    output_vis_numpy_raw, output_vis_numpy), axis=-2)
-            else:
-                output_vis_numpy = np.concatenate((input_img_numpy, 
-                                    output_vis_numpy_raw), axis=-2)
-
-            self.output_vis = torch.tensor(
-                    output_vis_numpy / 255., dtype=torch.float32
-                ).permute(0, 3, 1, 2).to(self.device)
-
-    #for testing
     # def compute_visuals(self):
     #     with torch.no_grad():
-    #         output_size = 1024
     #         input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
-    #         input_img_PIL = Image.fromarray(input_img_numpy.squeeze(0).astype('uint8'), 'RGB')
-    #         input_img_PIL = input_img_PIL.resize((output_size, output_size), resample=Image.BICUBIC)
-    #         tensor_input_img = torch.tensor(np.array(input_img_PIL)/255., dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
-
-    #         output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * tensor_input_img
-    #         # output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask)
+    #         output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * self.input_img
     #         output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
             
-    #         # if self.gt_lm is not None:
-    #         #     gt_lm_numpy = self.gt_lm.cpu().numpy()
-    #         #     pred_lm_numpy = self.pred_lm.detach().cpu().numpy()
-    #         #     output_vis_numpy = util.draw_landmarks(output_vis_numpy_raw, gt_lm_numpy, 'b')
-    #         #     output_vis_numpy = util.draw_landmarks(output_vis_numpy, pred_lm_numpy, 'r')
+    #         if self.gt_lm is not None:
+    #             gt_lm_numpy = self.gt_lm.cpu().numpy()
+    #             pred_lm_numpy = self.pred_lm.detach().cpu().numpy()
+    #             output_vis_numpy = util.draw_landmarks(output_vis_numpy_raw, gt_lm_numpy, 'b')
+    #             output_vis_numpy = util.draw_landmarks(output_vis_numpy, pred_lm_numpy, 'r')
             
-    #         #     output_vis_numpy = np.concatenate((input_img_numpy, 
-    #         #                         output_vis_numpy_raw, output_vis_numpy), axis=-2)
-    #         # else:
-    #         #     output_vis_numpy = np.concatenate((input_img_numpy, 
-    #         #                         output_vis_numpy_raw), axis=-2)
+    #             output_vis_numpy = np.concatenate((input_img_numpy, 
+    #                                 output_vis_numpy_raw, output_vis_numpy), axis=-2)
+    #         else:
+    #             output_vis_numpy = np.concatenate((input_img_numpy, 
+    #                                 output_vis_numpy_raw), axis=-2)
 
     #         self.output_vis = torch.tensor(
-    #                 output_vis_numpy_raw / 255., dtype=torch.float32
+    #                 output_vis_numpy / 255., dtype=torch.float32
     #             ).permute(0, 3, 1, 2).to(self.device)
+
+    #for testing
+    def compute_visuals(self):
+        with torch.no_grad():
+            output_size = 224
+            input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
+            input_img_PIL = Image.fromarray(input_img_numpy.squeeze(0).astype('uint8'), 'RGB')
+            input_img_PIL = input_img_PIL.resize((output_size, output_size), resample=Image.BICUBIC)
+            tensor_input_img = torch.tensor(np.array(input_img_PIL)/255., dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
+
+            output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * tensor_input_img
+            # output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask)
+            output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
+
+            self.output_vis = torch.tensor(
+                    output_vis_numpy_raw / 255., dtype=torch.float32
+                ).permute(0, 3, 1, 2).to(self.device)
 
     def save_mesh(self, name):
 

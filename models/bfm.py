@@ -39,8 +39,19 @@ class ParametricFaceModel:
         if not os.path.isfile(os.path.join(bfm_folder, default_name)):
             transferBFM09(bfm_folder)
         model = loadmat(os.path.join(bfm_folder, default_name))
-        # mean face shape. [3*N,1]
-        self.mean_shape = model['meanshape'].astype(np.float32)
+        # np_mean = np.loadtxt('bfm/female_mean.txt', dtype='f', delimiter= ' ')
+        np_mean = np.loadtxt('bfm/male_mean.txt', dtype='f', delimiter= ' ')
+        np_mean = np.reshape(np_mean, (-1, 107127))
+
+        # mean face shape. [3*N,1]        
+        self.mean_shape = np_mean #new mean
+        # self.mean_shape = model['meanshape'].astype(np.float32) #base mean in bfm
+
+        if recenter:
+            mean_shape = self.mean_shape.reshape([-1, 3])
+            # mean_shape = mean_shape - np.mean(mean_shape, axis=0, keepdims=True) #block if using new mean
+            self.mean_shape = mean_shape.reshape([-1, 1])
+
         # identity basis. [3*N,80]
         self.id_base = model['idBase'].astype(np.float32)
         # expression basis. [3*N,64]
@@ -63,11 +74,6 @@ class ParametricFaceModel:
             self.front_face_buf = model['tri_mask2'].astype(np.int64) - 1
             # vertex indices for pre-defined skin region to compute reflectance loss
             self.skin_mask = np.squeeze(model['skinmask'])
-        
-        if recenter:
-            mean_shape = self.mean_shape.reshape([-1, 3])
-            mean_shape = mean_shape - np.mean(mean_shape, axis=0, keepdims=True)
-            self.mean_shape = mean_shape.reshape([-1, 1])
 
         self.persc_proj = perspective_projection(focal, center)
         self.device = 'cpu'
