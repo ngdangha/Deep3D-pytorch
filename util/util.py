@@ -112,6 +112,32 @@ def save_image(image_numpy, image_path, aspect_ratio=1.0):
         image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
     image_pil.save(image_path)
 
+def save_image_with_input(image_numpy, image_name, image_path, aspect_ratio=1.0):
+    """Save a numpy image to the disk
+
+    Parameters:
+        image_numpy (numpy array) -- input numpy array
+        image_path (str)          -- the path of the image
+    """
+    image_pil = Image.fromarray(image_numpy)
+    h, w, _ = image_numpy.shape
+
+    if aspect_ratio is None:
+        pass
+    elif aspect_ratio > 1.0:
+        image_pil = image_pil.resize((h, int(w * aspect_ratio)), Image.BICUBIC)
+    elif aspect_ratio < 1.0:
+        image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
+
+    inputImg = image_pil.crop((0, 0, 224, 224))
+    outputImg = image_pil.crop((224, 0, 224*2, 224))
+
+    os.mkdir(os.path.join(image_path, image_name[:-4]))
+    # image_pil.save(os.path.join(image_path, image_name))
+    inputImg.save(os.path.join(image_path, image_name[:-4], image_name[:-4] + '_inputs.png'))
+    outputImg.save(os.path.join(image_path, image_name[:-4], image_name[:-4] + '_rendered_images.png'))
+
+
 
 def print_numpy(x, val=True, shp=False):
     """Print the mean, min, max, median, std, and size of a numpy array

@@ -8,3 +8,10 @@ data/
 models/
 options/
 util/__pycache__/
+datalist/
+datalist_linux/
+BFM/
+insightface/
+input/
+output/
+rasterize/

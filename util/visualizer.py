@@ -193,7 +193,38 @@ class MyVisualizer:
     #                     img_path = os.path.join(save_path, '%s_%03d.png' % (label, i + count))
     #                 util.save_image(image_numpy, img_path)
 
-    #for testing
+    # #for testing
+    # def display_current_results(self, save_path, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
+    #         add_image=True, ):
+    #     """Display current results on tensorboad; save current results to an HTML file.
+
+    #     Parameters:
+    #         visuals (OrderedDict) - - dictionary of images to display or save
+    #         total_iters (int) -- total iterations
+    #         epoch (int) - - the current epoch
+    #         dataset (str) - - 'train' or 'val' or 'test'
+    #     """
+    #     # if (not add_image) and (not save_results): return
+
+    #     for label, image in visuals.items():
+    #         for i in range(image.shape[0]):
+    #             image_numpy = util.tensor2im(image[i])
+    #             if add_image:
+    #                 self.writer.add_image(label + '%s_%02d'%(dataset, i + count),
+    #                         image_numpy, total_iters, dataformats='HWC')
+
+    #             if save_results:
+    #                 if name is not None:
+    #                     img_path = os.path.join(save_path, '%s.png' % name)
+    #                 else:
+    #                     img_path = os.path.join(save_path, '%s_%03d.png' % (label, i + count))
+    #                 util.save_image(image_numpy, img_path)
+
+    # def plot_current_losses(self, total_iters, losses, dataset='train'):
+    #     for name, value in losses.items():
+    #         self.writer.add_scalar(name + '/%s'%dataset, value, total_iters)
+
+    #original
     def display_current_results(self, save_path, visuals, total_iters, epoch, dataset='train', save_results=False, count=0, name=None,
             add_image=True, ):
         """Display current results on tensorboad; save current results to an HTML file.
@@ -214,15 +245,15 @@ class MyVisualizer:
                             image_numpy, total_iters, dataformats='HWC')
 
                 if save_results:
-                    if name is not None:
-                        img_path = os.path.join(save_path, '%s.png' % name)
-                    else:
-                        img_path = os.path.join(save_path, '%s_%03d.png' % (label, i + count))
-                    util.save_image(image_numpy, img_path)
+                    # save_path = os.path.join(self.img_dir, dataset, 'epoch_%s_%06d'%(epoch, total_iters))
+                    # if not os.path.isdir(save_path):
+                    #     os.makedirs(save_path)
 
-    def plot_current_losses(self, total_iters, losses, dataset='train'):
-        for name, value in losses.items():
-            self.writer.add_scalar(name + '/%s'%dataset, value, total_iters)
+                    if name is not None:
+                        img_name = '%s.png' % name
+                    else:
+                        img_name = '%s_%03d.png' % (label, i + count)
+                    util.save_image_with_input(image_numpy, img_name, save_path)
 
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data, dataset='train'):
