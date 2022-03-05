@@ -181,7 +181,7 @@ class FaceReconModel(BaseModel):
             self.loss_all.backward()         
             self.optimizer.step()        
 
-    #for training
+    # for training
     # def compute_visuals(self):
     #     with torch.no_grad():
     #         input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
@@ -204,45 +204,22 @@ class FaceReconModel(BaseModel):
     #                 output_vis_numpy / 255., dtype=torch.float32
     #             ).permute(0, 3, 1, 2).to(self.device)
 
-    # #for testing
-    # def compute_visuals(self):
-    #     with torch.no_grad():
-    #         output_size = 224
-    #         input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
-    #         input_img_PIL = Image.fromarray(input_img_numpy.squeeze(0).astype('uint8'), 'RGB')
-    #         input_img_PIL = input_img_PIL.resize((output_size, output_size), resample=Image.BICUBIC)
-    #         tensor_input_img = torch.tensor(np.array(input_img_PIL)/255., dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
-
-    #         output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * tensor_input_img
-    #         # output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask)
-    #         output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
-
-    #         self.output_vis = torch.tensor(
-    #                 output_vis_numpy_raw / 255., dtype=torch.float32
-    #             ).permute(0, 3, 1, 2).to(self.device)
-
-    #original
+    # for testing
     def compute_visuals(self):
         with torch.no_grad():
-                input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
-                output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * self.input_img
-                output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
-                
-                if self.gt_lm is not None:
-                    gt_lm_numpy = self.gt_lm.cpu().numpy()
-                    pred_lm_numpy = self.pred_lm.detach().cpu().numpy()
-                    output_vis_numpy = util.draw_landmarks(output_vis_numpy_raw, gt_lm_numpy, 'b')
-                    output_vis_numpy = util.draw_landmarks(output_vis_numpy, pred_lm_numpy, 'r')
-                
-                    output_vis_numpy = np.concatenate((input_img_numpy, 
-                                        output_vis_numpy_raw, output_vis_numpy), axis=-2)
-                else:
-                    output_vis_numpy = np.concatenate((input_img_numpy, 
-                                        output_vis_numpy_raw), axis=-2)
+            output_size = 224
+            input_img_numpy = 255. * self.input_img.detach().cpu().permute(0, 2, 3, 1).numpy()
+            input_img_PIL = Image.fromarray(input_img_numpy.squeeze(0).astype('uint8'), 'RGB')
+            input_img_PIL = input_img_PIL.resize((output_size, output_size), resample=Image.BICUBIC)
+            tensor_input_img = torch.tensor(np.array(input_img_PIL)/255., dtype=torch.float32).permute(2, 0, 1).unsqueeze(0).to(self.device)
 
-                self.output_vis = torch.tensor(
-                        output_vis_numpy / 255., dtype=torch.float32
-                    ).permute(0, 3, 1, 2).to(self.device)
+            output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask) * tensor_input_img
+            # output_vis = self.pred_face * self.pred_mask + (1 - self.pred_mask)
+            output_vis_numpy_raw = 255. * output_vis.detach().cpu().permute(0, 2, 3, 1).numpy()
+
+            self.output_vis = torch.tensor(
+                    output_vis_numpy_raw / 255., dtype=torch.float32
+                ).permute(0, 3, 1, 2).to(self.device)
 
     def save_mesh(self, name):
 
@@ -262,3 +239,40 @@ class FaceReconModel(BaseModel):
         pred_lm = np.stack([pred_lm[:,:,0],self.input_img.shape[2]-1-pred_lm[:,:,1]],axis=2) # transfer to image coordinate
         pred_coeffs['lm68'] = pred_lm
         savemat(name,pred_coeffs)
+
+    # save 3D face to obj file
+    def save_obj(self, path):
+        recon_shape = self.pred_vertex  # get reconstructed shape
+        # recon_shape[..., -1] = 10 - recon_shape[..., -1] # from camera space to world space
+        recon_shape = recon_shape.cpu().numpy()[0]
+
+        recon_color = self.pred_color
+        recon_color = recon_color.cpu().numpy()[0]
+        recon_color = np.clip(255. * recon_color, 0, 255).astype(np.uint8)
+
+        tri = self.facemodel.face_buf.cpu().numpy()
+
+        with open(path,'w') as file:
+            for i in range(len(recon_shape)):
+                file.write('v %f %f %f %f %f %f\n'%(recon_shape[i,0], recon_shape[i,1], recon_shape[i,2], recon_color[i,0], recon_color[i,1], recon_color[i,2]))
+
+            file.write('\n')
+
+            for i in range(len(tri)):
+                file.write('f %d %d %d\n'%(tri[i,0], tri[i,1], tri[i,2]))
+
+        file.close()
+
+    # save shape value as text file
+    def save_shape_txt(self, path):
+        recon_shape = self.pred_vertex  # get reconstructed shape
+        # recon_shape[..., -1] = 10 - recon_shape[..., -1] # from camera space to world space
+        recon_shape = recon_shape.cpu().numpy()[0]
+
+        with open(path,'w') as file:
+            for i in range(len(recon_shape)):
+                file.write('%f %f %f\n'%(recon_shape[i,0], recon_shape[i,1], recon_shape[i,2]))
+
+            file.write('\n')
+
+        file.close()

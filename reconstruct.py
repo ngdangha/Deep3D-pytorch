@@ -81,23 +81,23 @@ def detect(path):
         mouth_right_x = keypoints["mouth_right"][0]
         mouth_right_y = keypoints["mouth_right"][1]
 
-		#save detected landmark as text file
+        #save detected landmark as text file
         save_landmark(os.path.join(path, im_path[i].split(os.path.sep)[-1].replace('.png','.txt').replace('.PNG','.txt').replace('.jpg','.txt').replace('.JPG','.txt')), 
-			left_eye_x, left_eye_y, 
-			right_eye_x, right_eye_y, 
-			nose_x, nose_y, 
-			mouth_left_x, mouth_left_y, 
-			mouth_right_x, mouth_right_y) 
+            left_eye_x, left_eye_y, 
+            right_eye_x, right_eye_y, 
+            nose_x, nose_y, 
+            mouth_left_x, mouth_left_y, 
+            mouth_right_x, mouth_right_y) 
 
 
         landmark = np.array([[left_eye_x, left_eye_y], 
-			[right_eye_x, right_eye_y], 
-			[nose_x, nose_y], 
-			[mouth_left_x, mouth_left_y], 
-			[mouth_right_x, mouth_right_y]], 
-			dtype='f')
+            [right_eye_x, right_eye_y], 
+            [nose_x, nose_y], 
+            [mouth_left_x, mouth_left_y], 
+            [mouth_right_x, mouth_right_y]], 
+            dtype='f')
+            
     landmark_toc = time.perf_counter()
-
     landmark_time = landmark_toc - landmark_tic
 
     return landmark, landmark_time
@@ -138,7 +138,9 @@ def main(rank, opt, name):
         # model.save_mesh(os.path.join(visualizer.img_dir, name.split(os.path.sep)[-1], 'epoch_%s_%06d'%(opt.epoch, 0),img_name+'.obj')) # save reconstruction meshes
         # model.save_coeff(os.path.join(visualizer.img_dir, name.split(os.path.sep)[-1], 'epoch_%s_%06d'%(opt.epoch, 0),img_name+'.mat')) # save predicted coefficients
 
-        model.save_mesh(os.path.join(reconstruct_path, img_name+'.obj')) # save reconstruction meshes
+        # model.save_mesh(os.path.join(reconstruct_path, img_name+'.obj')) # save reconstruction meshes
+        # model.save_obj(os.path.join(reconstruct_path, img_name+'.obj'))
+        # model.save_shape_txt(os.path.join(reconstruct_path, img_name+'.txt'))
 
     recon_toc = time.perf_counter()
     recon_time = recon_toc - recon_tic
@@ -147,8 +149,9 @@ def main(rank, opt, name):
 
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
-    lm, lm_time = detect(root)
+
+    # lm, lm_time = detect(root)
+    # print(f"Detected Landmarks in {lm_time:0.4f} seconds")
+
     recon_time = main(0, opt, opt.img_folder)
-    
-    print(f"Detected Landmarks in {lm_time:0.4f} seconds")
     print(f"Created meshes in {recon_time:0.4f} seconds")

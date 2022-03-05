@@ -39,8 +39,8 @@ class ParametricFaceModel:
         if not os.path.isfile(os.path.join(bfm_folder, default_name)):
             transferBFM09(bfm_folder)
         model = loadmat(os.path.join(bfm_folder, default_name))
-        # np_mean = np.loadtxt('bfm/female_mean.txt', dtype='f', delimiter= ' ')
-        np_mean = np.loadtxt('bfm/male_mean.txt', dtype='f', delimiter= ' ')
+
+        np_mean = np.loadtxt('bfm/new_mean.txt', dtype='f', delimiter= ' ')
         np_mean = np.reshape(np_mean, (-1, 107127))
 
         # mean face shape. [3*N,1]        
@@ -101,7 +101,10 @@ class ParametricFaceModel:
         batch_size = id_coeff.shape[0]
         id_part = torch.einsum('ij,aj->ai', self.id_base, id_coeff)
         exp_part = torch.einsum('ij,aj->ai', self.exp_base, exp_coeff)
+
         face_shape = id_part + exp_part + self.mean_shape.reshape([1, -1])
+        # face_shape = id_part + self.mean_shape.reshape([1, -1])
+
         return face_shape.reshape([batch_size, -1, 3])
     
 

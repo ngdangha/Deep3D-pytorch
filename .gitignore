@@ -10,8 +10,12 @@ options/
 util/__pycache__/
 datalist/
 datalist_linux/
-BFM/
 insightface/
 input/
 output/
 rasterize/
+nvdiffrast/
+BFM/01_MorphableModel.mat
+BFM/BFM_model_front.mat
+BFM/Exp_Pca.bin
+.vscode/
