@@ -1,12 +1,12 @@
-name: deep3d_pytorch
+# name: deep3d-test
 channels:
   - pytorch
   - conda-forge
   - defaults
 dependencies:
   - python=3.6
-  - pytorch=1.6.0
-  - torchvision=0.7.0
+  # - pytorch=1.6.0
+  # - torchvision=0.7.0
   - numpy=1.18.1
   - scikit-image=0.16.2
   - scipy=1.4.1
@@ -22,3 +22,7 @@ dependencies:
     - kornia==0.5.5
     - dominate==2.6.0
     - trimesh==3.9.20
+    - mtcnn
+    # - ninja
+    # - imageio
+    # - imageio-ffmpeg

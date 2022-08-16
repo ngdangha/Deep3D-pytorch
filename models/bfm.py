@@ -44,12 +44,12 @@ class ParametricFaceModel:
         np_mean = np.reshape(np_mean, (-1, 107127))
 
         # mean face shape. [3*N,1]        
-        self.mean_shape = np_mean #new mean
-        # self.mean_shape = model['meanshape'].astype(np.float32) #base mean in bfm
+        # self.mean_shape = np_mean #new mean
+        self.mean_shape = model['meanshape'].astype(np.float32) #base mean in bfm
 
         if recenter:
             mean_shape = self.mean_shape.reshape([-1, 3])
-            # mean_shape = mean_shape - np.mean(mean_shape, axis=0, keepdims=True) #block if using new mean
+            mean_shape = mean_shape - np.mean(mean_shape, axis=0, keepdims=True) #block if using new mean
             self.mean_shape = mean_shape.reshape([-1, 1])
 
         # identity basis. [3*N,80]

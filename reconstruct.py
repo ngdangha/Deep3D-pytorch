@@ -19,6 +19,7 @@ from util.preprocess import align_img
 from PIL import Image
 from util.util import save_landmark
 
+
 #set up path
 image_test_path = 'images'
 root = 'input'

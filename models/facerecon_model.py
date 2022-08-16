@@ -128,18 +128,19 @@ class FaceReconModel(BaseModel):
         self.gt_lm = input['lms'].to(self.device)  if 'lms' in input else None
         self.trans_m = input['M'].to(self.device) if 'M' in input else None
         self.image_paths = input['im_paths'] if 'im_paths' in input else None
-
+    
+    
     def forward(self):
         output_coeff = self.net_recon(self.input_img)
         self.facemodel.to(self.device)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = \
             self.facemodel.compute_for_render(output_coeff)
-        self.pred_mask, _, self.pred_face = self.renderer(
-            self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color)
+#         self.pred_mask, _, self.pred_face = self.renderer(
+#             self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color)
         
-        self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
-
-
+#         self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
+        
+        
     def compute_losses(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
 
@@ -231,6 +232,21 @@ class FaceReconModel(BaseModel):
         tri = self.facemodel.face_buf.cpu().numpy()
         mesh = trimesh.Trimesh(vertices=recon_shape, faces=tri, vertex_colors=np.clip(255. * recon_color, 0, 255).astype(np.uint8))
         mesh.export(name)
+        
+    def export_mesh(self):
+        recon_shape = self.pred_vertex  # get reconstructed shape
+        recon_shape[..., -1] = 10 - recon_shape[..., -1] # from camera space to world space
+        recon_shape = recon_shape.cpu().numpy()[0]
+        
+        recon_color = self.pred_color
+        recon_color = recon_color.cpu().numpy()[0]
+        recon_color = np.clip(255. * recon_color, 0, 255).astype(np.uint8)
+        
+        tri = self.facemodel.face_buf.cpu().numpy()
+        
+        mesh = trimesh.Trimesh(vertices=recon_shape, faces=tri, vertex_colors=np.clip(255. * recon_color, 0, 255).astype(np.uint8))
+        
+        return recon_shape, tri, recon_color
 
     def save_coeff(self,name):
 
