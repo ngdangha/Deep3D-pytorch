@@ -40,7 +40,7 @@ class ParametricFaceModel:
             transferBFM09(bfm_folder)
         model = loadmat(os.path.join(bfm_folder, default_name))
 
-        np_mean = np.loadtxt('bfm/new_mean.txt', dtype='f', delimiter= ' ')
+        np_mean = np.loadtxt('./BFM/new_mean.txt', dtype='f', delimiter= ' ')
         np_mean = np.reshape(np_mean, (-1, 107127))
 
         # mean face shape. [3*N,1]        
