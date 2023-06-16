@@ -242,3 +242,9 @@ class MyVisualizer:
         print(message)  # print the message
         with open(self.log_name, "a") as log_file:
             log_file.write('%s\n' % message)  # save the message
+            
+    def save_img(self, visuals):
+        for label, image in visuals.items():
+            for i in range(image.shape[0]):
+                image_numpy = util.tensor2im(image[i])
+                return image_numpy

@@ -34,7 +34,8 @@ class FaceReconModel(BaseModel):
         parser.add_argument('--camera_d', type=float, default=10.)
         parser.add_argument('--z_near', type=float, default=5.)
         parser.add_argument('--z_far', type=float, default=15.)
-
+        parser.add_argument('--use_opengl', type=util.str2bool, nargs='?', const=True, default=False, help='use opengl context or not')
+        
         if is_train:
             # training parameters
             parser.add_argument('--net_recog', type=str, default='r50', choices=['r18', 'r43', 'r50'], help='face recog network structure')
@@ -97,7 +98,8 @@ class FaceReconModel(BaseModel):
         # fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
         fov = 2 * np.arctan(112 / 1015) * 180 / np.pi
         self.renderer = MeshRenderer(
-            rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center)
+            # rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center)
+            rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center), use_opengl=opt.use_opengl
         )
 
         if self.isTrain:
@@ -135,10 +137,10 @@ class FaceReconModel(BaseModel):
         self.facemodel.to(self.device)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = \
             self.facemodel.compute_for_render(output_coeff)
-#         self.pred_mask, _, self.pred_face = self.renderer(
-#             self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color)
+        self.pred_mask, _, self.pred_face = self.renderer(
+            self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color)
         
-#         self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
+        self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
         
         
     def compute_losses(self):

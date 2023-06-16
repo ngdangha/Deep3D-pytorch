@@ -1,16 +1,13 @@
 """This script is the test script for Deep3DFaceRecon_pytorch
 """
-import os
-os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
 
 import torch
 import tensorflow as tf
 import numpy as np
 import cv2
-import pyrender
 import trimesh
 
-# import os
+import os
 import glob
 import platform
 import argparse
@@ -28,6 +25,11 @@ from util.preprocess import align_img
 from PIL import Image
 from util.util import save_landmark
 
+from flask import Flask, request, jsonify
+import base64
+import face_alignment
+
+app = Flask(__name__)
 
 #set up path
 input_path = 'input'
@@ -40,33 +42,51 @@ if not os.path.exists(reconstruct_path):
 if not os.path.exists(rasterize_path):
 	os.makedirs(rasterize_path)
 
+    
+#set up model
+opt = TestOptions().parse()    
+device = torch.device(0)
+torch.cuda.set_device(device)
+model = create_model(opt)
+model.setup(opt)
+model.device = device
+model.parallelize()
+model.eval()
+lm3d_std = load_lm3d('BFM') 
+visualizer = MyVisualizer(opt)
+    
+#setup detector
+# detector = MTCNN()
+fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, device='cpu', face_detector='blazeface')
+
+#detect landmark function
 def detect(img):
-
-    img = np.array(img)
-    color = (255, 255, 51) #bright yellow
-    thickness = 3 
-
-    #setup detector
-    detector = MTCNN()
+#     global detector_mtcnn
+    
+#     detector_mtcnn = MTCNN()
+    
+    image = np.array(img)
+    
+    # print(detector)
 
     #detect keypoints
-    keypoints = detector.detect_faces(img)[0]['keypoints']
+    preds = fa.get_landmarks_from_image(image)[0]
 
     #extract landmarks from keypoints
-    left_eye_x = keypoints["left_eye"][0]
-    left_eye_y = keypoints["left_eye"][1]
+    left_eye_x = (preds[37][0] + preds[40][0])/2
+    left_eye_y = (preds[37][1] + preds[40][1])/2
 
-    right_eye_x = keypoints["right_eye"][0]
-    right_eye_y = keypoints["right_eye"][1]
+    right_eye_x = (preds[43][0] + preds[46][0])/2
+    right_eye_y = (preds[43][1] + preds[46][1])/2
 
-    nose_x = keypoints["nose"][0]
-    nose_y = keypoints["nose"][1]
+    nose_x = (preds[30][0] + preds[33][0])/2
+    nose_y = (preds[30][1] + preds[33][1])/2
 
-    mouth_left_x = keypoints["mouth_left"][0]
-    mouth_left_y = keypoints["mouth_left"][1]
+    mouth_left_x = preds[48][0]
+    mouth_left_y = preds[48][1]
 
-    mouth_right_x = keypoints["mouth_right"][0]
-    mouth_right_y = keypoints["mouth_right"][1]
+    mouth_right_x = preds[54][0]
+    mouth_right_y = preds[54][1]
 
     #create numpy ndarray 
     landmark = np.array([[left_eye_x, left_eye_y], 
@@ -76,37 +96,12 @@ def detect(img):
         [mouth_right_x, mouth_right_y]], 
         dtype='f')
 
-    #draw landmarks and bounding box
-#     bounding_box = detector.detect_faces(img)[0]['box']
-
-#     cv2.rectangle(img,
-#         (bounding_box[0], bounding_box[1]),
-#         (bounding_box[0]+bounding_box[2], bounding_box[1] + bounding_box[3]),
-#         color, thickness)
-
-#     cv2.circle(img,(keypoints['left_eye']), thickness, color, -1)
-#     cv2.circle(img,(keypoints['right_eye']), thickness, color, -1)
-#     cv2.circle(img,(keypoints['nose']), thickness, color, -1)
-#     cv2.circle(img,(keypoints['mouth_left']), thickness, color, -1)
-#     cv2.circle(img,(keypoints['mouth_right']), thickness, color, -1)
-
-#     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
     # return landmark, img
     return landmark
 
 
-def reconstruct(rank, opt, im, lm):
-    device = torch.device(rank)
-    torch.cuda.set_device(device)
-    model = create_model(opt)
-    model.setup(opt)
-    model.device = device
-    model.parallelize()
-    model.eval()
-
-    lm3d_std = load_lm3d(opt.bfm_folder) 
-    
+#reconstruct 3d face function
+def reconstruct(im, lm):
     
     W,H = im.size
     lm = lm.reshape([-1, 2])
@@ -128,89 +123,94 @@ def reconstruct(rank, opt, im, lm):
         
     return recon_shape, tri, recon_tex
 
-def rasterize(shape, index, texture, quality):
-	
-	if quality == 'low':
-		size = 256
-	elif quality == 'high':
-		size = 1024
-	else: 
-		size = 512
 
-	#set up pyrender scene
-	scene = pyrender.Scene(bg_color = [0.0, 0.0, 0.0])
+#rasterize 3d face
+def rasterize():
+    visuals = model.get_current_visuals()  # get image results
+    result = visualizer.save_img(visuals)
 
-	#set up pyrender camera
-	def camera_pose():
-		centroid = [0.0, 0.0, 2.5]
-		cp = np.eye(4)
-		s2 = 1.0 / np.sqrt(2.0)
+    b,g,red = cv2.split(result)
+    result = cv2.merge((red,g,b))
 
-		cp[:3,:3] = np.array([
-			[1.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0],
-			[0.0, 0.0, 1.0]
-		])
+    return result
 
-		hfov = np.pi / 3.0
-		dist = scene.scale / (2.0 * np.tan(hfov))
-		cp[:3,3] = dist * np.array([0.0, 0.0, 0.0]) + centroid
 
-		return cp
-
-	pc = pyrender.PerspectiveCamera(yfov=np.pi / 3.5, znear=0.5, zfar=50.0)
-	oc = pyrender.OrthographicCamera(xmag = 1.0, ymag = 1.0, znear = 0.5, zfar = 50.0)
-	npc = pyrender.Node(matrix=camera_pose(), camera=pc)
-	noc = pyrender.Node(matrix=camera_pose(), camera=oc)
-
-	scene.add_node(npc)
-	scene.add_node(noc)
-	#noc = orthographic, npc = perspective
-	scene.main_camera_node = noc
-
-	#set up pyrender light
-	dlight = pyrender.DirectionalLight(color=[0.9, 0.75, 0.7], intensity=5.0)
-
-	scene.add(dlight, pose=camera_pose())
-
-	#load mesh
-	input_mesh = trimesh.Trimesh(vertices = shape, faces = index, vertex_colors = texture, process = False)
-	mesh = pyrender.Mesh.from_trimesh(input_mesh)
-	nm = pyrender.Node(mesh=mesh, matrix=np.eye(4))
-	scene.add_node(nm)
-	
-	#Offscreen Render
-	r = pyrender.OffscreenRenderer(viewport_width=size, viewport_height=size, point_size=1.0)
-	
-	color, depth = r.render(scene)
-	
-	b,g,red = cv2.split(color)
-	result = cv2.merge((red,g,b))
-	
-	scene.remove_node(nm)
-	r.delete()
-
-	#save result as PNG image
-	# cv2.imwrite('pyrender.png', result)
-
-	return result
-
+#main api function
 def unmask(input_img):
-    
-    opt = TestOptions().parse()
     
     lm = detect(input_img)
     
-    shape, tri, texture = reconstruct(0, opt, input_img, lm)
+    shape, tri, texture = reconstruct(input_img, lm)
     
-    recon_img = rasterize(shape, tri, texture, quality = 'low')
+    recon_img = rasterize()
     
     return recon_img
 
-if __name__ == '__main__':
+
+def loadBase64Img(uri):
+    encoded_data = uri.split(',')[1]
+    nparr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
+
+
+def load_image(img):
+	exact_image = False; base64_img = False; url_img = False
+
+	if type(img).__module__ == np.__name__:
+		exact_image = True
+
+	elif len(img) > 11 and img[0:11] == "data:image/":
+		base64_img = True
+
+	elif len(img) > 11 and img.startswith("http"):
+		url_img = True
+
+	#---------------------------
+
+	if base64_img == True:
+		img = loadBase64Img(img)
+
+	elif url_img:
+		img = np.array(Image.open(requests.get(img, stream=True).raw))
+
+	elif exact_image != True: #image path passed as input
+		if os.path.isfile(img) != True:
+			raise ValueError("Confirm that ",img," exists")
+
+		img = cv2.imread(img)
+
+	return img
+
+#main
+
+@app.route("/3dface", methods=["POST"])
+def generate():
+    req = request.get_json()
     
-    input_img = Image.open('input.png').convert('RGB')
+    img_input = ""
+    if "img" in list(req.keys()):
+        img_input = req["img"]
+
+    validate_img = False
+    if len(img_input) > 11 and img_input[0:11] == "data:image/":
+        validate_img = True
+
+    if validate_img != True:
+        return jsonify({"result": {'message': 'Vui lòng truyền ảnh dưới dạng Base64'}}), 400
+    
+    input_img = load_image(img_input)
+    
+    input_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
+    
+    input_img = Image.fromarray(input_img)
     
     recon_img = unmask(input_img)
     
-    cv2.imwrite('rasterized.png', recon_img)
+    retval, buffer = cv2.imencode('.jpg', recon_img)
+    jpg_as_text = base64.b64encode(buffer)
+    
+    return jsonify({ "result": "data:image/jpeg;base64," + str(jpg_as_text)[2:-1] }), 200
+
+
+app.run(host="0.0.0.0", port=5000)

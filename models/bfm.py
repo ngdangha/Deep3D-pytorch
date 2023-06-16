@@ -44,7 +44,7 @@ class ParametricFaceModel:
         np_mean = np.reshape(np_mean, (-1, 107127))
 
         # mean face shape. [3*N,1]        
-        # self.mean_shape = np_mean #new mean
+        self.mean_shape = np_mean #new mean
         self.mean_shape = model['meanshape'].astype(np.float32) #base mean in bfm
 
         if recenter:
@@ -247,6 +247,7 @@ class ParametricFaceModel:
         """
         return face_shape @ rot + trans.unsqueeze(1)
         # return face_shape + trans.unsqueeze(1)
+        # return face_shape
 
 
     def get_landmarks(self, face_proj):

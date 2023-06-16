@@ -151,8 +151,8 @@ def main(rank, opt, name):
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
 
-    # lm, lm_time = detect(root)
-    # print(f"Detected Landmarks in {lm_time:0.4f} seconds")
+    lm, lm_time = detect(root)
+    print(f"Detected Landmarks in {lm_time:0.4f} seconds")
 
     recon_time = main(0, opt, opt.img_folder)
     print(f"Created meshes in {recon_time:0.4f} seconds")
