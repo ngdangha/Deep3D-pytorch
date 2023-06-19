@@ -57,7 +57,7 @@ visualizer = MyVisualizer(opt)
     
 #setup detector
 # detector = MTCNN()
-fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, device='cpu', face_detector='blazeface')
+fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, device='cpu', face_detector='blazeface')
 
 #detect landmark function
 def detect(img):
